@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js canvas - interactive - cubes</title>
+		<title>AnDyNA</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -103,7 +103,12 @@
 					sphere.position.y = 25;
 					sphere.position.z = 25;
 
-					snake.body.push(sphere);
+					if (i ==0){
+						snake.head = sphere;
+					}
+					else{
+						snake.body.push(sphere);
+					}
 
 					scene.add( sphere );
 
@@ -208,45 +213,55 @@
 
 			}
 
+			function updateSnake() {
+				var vx = Math.sin(snake.angle)*snake.speed;
+				var vz = Math.cos(snake.angle)*snake.speed;
+
+				snake.head.position.x += vx;
+				snake.head.position.z += vz;
+				var diff = 50;
+				for (var i = snake.body.length-1; i >= 0; i--){
+					var dx, dy, l, ux, uz;
+					if (i == snake.body.length - 1){
+						dx = snake.head.position.x - snake.body[i].position.x;
+						dz = snake.head.position.z - snake.body[i].position.z;
+					}else{					
+						dx = snake.body[i+1].position.x - snake.body[i].position.x;
+						dz = snake.body[i+1].position.z - snake.body[i].position.z;
+					}
+					l = Math.sqrt(dx*dx + dz*dz);
+					ux = dx*diff/l;
+					uz = dz*diff/l;
+
+					if (i == snake.body.length - 1){
+						snake.body[i].position.x = snake.head.position.x - ux;
+						snake.body[i].position.z = snake.head.position.z - uz;
+					}else{
+						snake.body[i].position.x = snake.body[i+1].position.x - ux;
+						snake.body[i].position.z = snake.body[i+1].position.z - uz;
+					}
+				}
+			}
+
 			function gameLogic(){
-				var hp = snake.body[0].position;
+				var hp = snake.head.position;
 				var dbp = deliciousBall.position;
 				var dx = dbp.x-hp.x;
-				var dy = dbp.z-hp.z;
-				if (Math.sqrt(dx*dx + dy*dy) < 50){
+				var dz = dbp.z-hp.z;
+				if (Math.sqrt(dx*dx + dz*dz) < 50){
 					//got the ball!
-					snake.angle = Math.atan2(dx,dy);
-					snake.body.push(new THREE.Mesh(snake.body[1].geometry, snake.body[1].material));
+					snake.angle = Math.atan2(dx,dz);
+					snake.body.push(new THREE.Mesh(snake.body[0].geometry, snake.body[0].material));
 					scene.add(snake.body[snake.body.length - 1]);
-					for(var i = snake.body.length - 1; i > 0; i--){
-					snake.body[i].position.x = snake.body[i-1].position.x;
-					snake.body[i].position.z = snake.body[i-1].position.z;						
-					}
-					snake.body[0].position.x = dbp.x;
-					snake.body[0].position.z = dbp.z;
+					snake.body[snake.body.length - 1].position.x = hp.x;
+					snake.body[snake.body.length - 1].position.z = hp.z;
+					snake.head.position.x = dbp.x;
+					snake.head.position.z = dbp.z;
 					deliciousBall.position.x = Math.random()*1000-500;
 					deliciousBall.position.z = Math.random()*1000-500;
 				}
 			}
 
-
-			function updateSnake() {
-				var vx = Math.sin(snake.angle)*snake.speed;
-				var vz = Math.cos(snake.angle)*snake.speed;
-
-				snake.body[0].position.x += vx;
-				snake.body[0].position.z += vz;
-				var diff = 50;
-				for (var i = 1; i < snake.body.length; i++){
-					var dx = snake.body[i-1].position.x - snake.body[i].position.x;
-					var dz = snake.body[i-1].position.z - snake.body[i].position.z;
-					var l = Math.sqrt(dx*dx + dz*dz);
-					var ux = dx*diff/l;
-					var uz = dz*diff/l;
-					snake.body[i].position.x = snake.body[i-1].position.x - ux;
-					snake.body[i].position.z = snake.body[i-1].position.z - uz;
-				}
-			}
 			function render() {
 
 				var timer = Date.now() * 0.0001;
