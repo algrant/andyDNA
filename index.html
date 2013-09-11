@@ -25,6 +25,7 @@
 			var camera, scene, renderer, scene_width, scene_height;
 			var snake;
 			var deliciousBall;
+			var lastTime = 0;
 
 			init();
 			animate();
@@ -88,8 +89,29 @@
 
 				snake = {angle:0,speed:3,body:[]};
 
-				var geometry = new THREE.SphereGeometry( 30, 10, 3 );
-				var material = new THREE.MeshLambertMaterial( { color: 0x440000, shading: THREE.SmoothShading, overdraw: true } );
+				var circleRadius = 20;
+				var circleShape = new THREE.Shape();
+				circleShape.moveTo( 0, circleRadius );
+				var quad_offset = .90;
+				circleShape.quadraticCurveTo( circleRadius*quad_offset, circleRadius*quad_offset, circleRadius, 0 );
+				circleShape.quadraticCurveTo( circleRadius*quad_offset, -circleRadius*quad_offset, 0, -circleRadius );
+				circleShape.quadraticCurveTo( -circleRadius*quad_offset, -circleRadius*quad_offset, -circleRadius, 0 );
+				circleShape.quadraticCurveTo( -circleRadius*quad_offset, circleRadius*quad_offset, 0, circleRadius );
+
+				var geometry = new THREE.ShapeGeometry( circleShape ) ; //.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) ); //new THREE.SphereGeometry( 30, 10, 3 );
+				var material = new THREE.MeshLambertMaterial( { color: 0x440000, overdraw: true } );
+
+
+				/*var geometry = circleShape.createPointsGeometry();
+				var material = new THREE.LineBasicMaterial( { linewidth: 10, color: 0x333333, transparent: true } );
+
+				var line = new THREE.Line( geometry, material );
+				line.position.set( x, y, z );
+				line.rotation.set( rx, ry, rz );
+				line.scale.set( s, s, s );
+				parent.add( line );*/
+
+
 
 				for ( var i = 0; i < 2; i ++ ) {
 
@@ -100,8 +122,9 @@
 						sphere.material.color.setHex( 0x112255 );
 					}
 					sphere.position.x = i * 50 + 25;
-					sphere.position.y = 25;
+					sphere.position.y = Math.random()*50-25;
 					sphere.position.z = 25;
+					sphere.rotation.set(Math.PI*1.5,0,0);
 
 					if (i ==0){
 						snake.head = sphere;
@@ -115,28 +138,30 @@
 				}
 
 				deliciousBall = new THREE.Mesh( geometry, material.clone());
+				deliciousBall.rotation.set(Math.PI*1.5,0,0);
 				deliciousBall.material.color.setHex(0xaaaa00) ;
 				deliciousBall.position.x = Math.random()*1000-500;
 				deliciousBall.position.z = Math.random()*1000-500;
 				scene.add(deliciousBall);
 				// Lights
 
-				var ambientLight = new THREE.AmbientLight( 0xffffff );
-				scene.add( ambientLight );
+				//var ambientLight = new THREE.AmbientLight( 0xffffff );
+				//scene.add( ambientLight );
 
+				var directionalLight = new THREE.DirectionalLight( 0xffffff,5 );
+				directionalLight.position.x = 0;
+				directionalLight.position.y = 1;
+				directionalLight.position.z = 0;
+				directionalLight.position.normalize();
+				console.log(directionalLight.position)
+				scene.add( directionalLight );
+				/*
 				var directionalLight = new THREE.DirectionalLight( 0xffffff );
 				directionalLight.position.x = Math.random() - 0.5;
 				directionalLight.position.y = Math.random() - 0.5;
 				directionalLight.position.z = Math.random() - 0.5;
 				directionalLight.position.normalize();
-				scene.add( directionalLight );
-
-				var directionalLight = new THREE.DirectionalLight( 0xffffff );
-				directionalLight.position.x = Math.random() - 0.5;
-				directionalLight.position.y = Math.random() - 0.5;
-				directionalLight.position.z = Math.random() - 0.5;
-				directionalLight.position.normalize();
-				scene.add( directionalLight );
+				scene.add( directionalLight );*/
 
 				renderer = new THREE.CanvasRenderer();
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -202,21 +227,29 @@
 
 			//
 
-			function animate() {
+			function animate(t) {
+
+				//console.log(t,c);
 
 				requestAnimationFrame( animate );
 
-				updateSnake();
+				var dt = t - lastTime;
+				if (!dt){
+					dt = 0;
+				}
+				lastTime = t;
+
+				updateSnake(dt);
 				gameLogic();
 				render();
 				stats.update();
 
 			}
 
-			function updateSnake() {
-				var vx = Math.sin(snake.angle)*snake.speed;
-				var vz = Math.cos(snake.angle)*snake.speed;
-
+			function updateSnake(dt) {
+				var vx = Math.sin(snake.angle)*snake.speed*dt/16;
+				var vz = Math.cos(snake.angle)*snake.speed*dt/16;
+				
 				snake.head.position.x += vx;
 				snake.head.position.z += vz;
 				var diff = 50;
@@ -253,6 +286,7 @@
 					snake.angle = Math.atan2(dx,dz);
 					snake.body.push(new THREE.Mesh(snake.body[0].geometry, snake.body[0].material));
 					scene.add(snake.body[snake.body.length - 1]);
+					snake.body[snake.body.length - 1].rotation.set(Math.PI*1.5,0,0);
 					snake.body[snake.body.length - 1].position.x = hp.x;
 					snake.body[snake.body.length - 1].position.z = hp.z;
 					snake.head.position.x = dbp.x;
