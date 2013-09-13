@@ -113,20 +113,26 @@
 
 
 
-				for ( var i = 0; i < 2; i ++ ) {
+				for ( var i = 0; i < 15; i ++ ) {
 
 					var sphere = new THREE.Mesh( geometry, material );
 
 					if (i == 0){
 						sphere.setMaterial(material.clone());
 						sphere.material.color.setHex( 0x112255 );
+						sphere.position.x = i * 70;
+						sphere.position.y = Math.random()*50-25;
+						sphere.position.z = - i*50 + 25;
+					} else{
+						sphere.position.x = (15 - i) * 70;
+						sphere.position.y = Math.random()*50-25;
+						sphere.position.z = - i*50 + 25;
 					}
-					sphere.position.x = i * 50 + 25;
-					sphere.position.y = Math.random()*50-25;
-					sphere.position.z = 25;
 					sphere.rotation.set(Math.PI*1.5,0,0);
 
-					if (i ==0){
+					console.log(sphere.position.x, sphere.position.z);
+
+					if (i == 0){
 						snake.head = sphere;
 					}
 					else{
@@ -145,9 +151,6 @@
 				scene.add(deliciousBall);
 				// Lights
 
-				//var ambientLight = new THREE.AmbientLight( 0xffffff );
-				//scene.add( ambientLight );
-
 				var directionalLight = new THREE.DirectionalLight( 0xffffff,5 );
 				directionalLight.position.x = 0;
 				directionalLight.position.y = 1;
@@ -155,13 +158,7 @@
 				directionalLight.position.normalize();
 				console.log(directionalLight.position)
 				scene.add( directionalLight );
-				/*
-				var directionalLight = new THREE.DirectionalLight( 0xffffff );
-				directionalLight.position.x = Math.random() - 0.5;
-				directionalLight.position.y = Math.random() - 0.5;
-				directionalLight.position.z = Math.random() - 0.5;
-				directionalLight.position.normalize();
-				scene.add( directionalLight );*/
+
 
 				renderer = new THREE.CanvasRenderer();
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -241,9 +238,53 @@
 
 				updateSnake(dt);
 				gameLogic();
+				/*var coll = collisions();
+				var max = 0;
+				while (coll && max < 10){
+					collisions();
+					max ++;
+				}*/
+
 				render();
 				stats.update();
 
+			}
+
+			function collisions(){
+				var coll = false;
+				for (var i = -1; i < snake.body.length; i++){
+					var x1,z1,x2,z2,dx,dz;
+					var r = 50;
+					if(i == -1){
+						x1 = snake.head.position.x;
+						z1 = snake.head.position.z;
+					}else{
+						x1 = snake.body[i].position.x;
+						z1 = snake.body[i].position.z;						
+					}
+					for (var j = i+1; j < snake.body.length; j++){
+						x2 = snake.body[j].position.x;
+						z2 = snake.body[j].position.z;
+						dx = Math.abs(x2 - x1);
+						dz = Math.abs(z2 - z1);
+						var l = Math.sqrt(dx*dx+dz*dz);
+						if ( l < r){
+							//collision
+							if (i!=-1){
+								snake.body[i].position.x = x1 - 0.25*dx*(1-r/l)/2;
+								snake.body[i].position.z = z1 - 0.25*dz*(1-r/l)/2;
+							} else{
+								snake.head.position.x = x1 - 0.25*dx*(1-r/l)/2;
+								snake.head.position.z = z1 - 0.25*dz*(1-r/l)/2;							
+							}
+							snake.body[j].position.x = x2 + 0.25*dx*(1-r/l)/2;
+							snake.body[j].position.z = z2 + 0.25*dz*(1-r/l)/2;
+
+							coll = true;
+						}			
+					}
+				}
+				return coll;
 			}
 
 			function updateSnake(dt) {
