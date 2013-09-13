@@ -87,8 +87,8 @@
 
 				// Snake
 
-				snake = {angle:0,speed:3,body:[]};
-
+				snake = {angle:0,speed:10,body:[], turn_radius:50, direction:"straight"};
+				snake.angle_acc = Math.PI/2 - Math.acos(snake.speed/snake.turn_radius);
 				var circleRadius = 20;
 				var circleShape = new THREE.Shape();
 				circleShape.moveTo( 0, circleRadius );
@@ -181,10 +181,24 @@
 
 				switch( event.keyCode ) {
 					//left, up, right, down
-					case 37: snake.angle +=.1; break;
-					case 38: snake.speed *=1.5; break; 
-					case 39: snake.angle -=.1; break; 
-					case 40: snake.speed /=1.5; break; 
+					case 37: 
+						snake.direction = "left";
+						//snake.angle += snake.angle_acc;
+						break;
+					case 38: 
+						snake.speed *=1.2; 
+						//snake.turn_radius += 3;
+						snake.angle_acc = Math.PI/2 - Math.acos(snake.speed/snake.turn_radius);
+						break; 
+					case 39: 
+						snake.direction = "right";
+						//snake.angle -= snake.angle_acc; 
+						break; 
+					case 40: 
+					snake.speed /=1.2; 
+						//snake.turn_radius -= 3;
+						snake.angle_acc = Math.PI/2 - Math.acos(snake.speed/snake.turn_radius);
+						break; 
 
 				}
 
@@ -194,8 +208,9 @@
 
 				switch( event.keyCode ) {
 
-					case 16: isShiftDown = false; break;
-					case 17: isCtrlDown = false; break;
+					case 37: snake.direction = "straight";
+						break;
+					case 39: snake.direction = "straight"; break;
 
 				}
 			}
@@ -288,6 +303,12 @@
 			}
 
 			function updateSnake(dt) {
+				if (snake.direction == "left"){
+					snake.angle += snake.angle_acc;
+				}else if (snake.direction == "right"){
+					snake.angle -= snake.angle_acc;
+				}
+
 				var vx = Math.sin(snake.angle)*snake.speed*dt/16;
 				var vz = Math.cos(snake.angle)*snake.speed*dt/16;
 				
