@@ -3,6 +3,7 @@ var camera, scene, renderer, scene_width, scene_height;
 var snake;
 var deliciousBall;
 var lastTime = 0;
+var directionalLight;;
 
 function init() {
 
@@ -69,14 +70,32 @@ function init() {
   deliciousBall.position.x = Math.random()*1000-500;
   deliciousBall.position.z = Math.random()*1000-500;
   scene.add(deliciousBall);
-
   // Lights
+
+   directionalLight = new THREE.PointLight( 0xffffff,1.5 )
+  // directionalLight.position.x = 0;
+  // directionalLight.position.y = 0;
+  // directionalLight.position.z = 300;
+  // //directionalLight.position.normalize();
+  // console.log(directionalLight.position)
+  // scene.add( directionalLight );
+
   hlight = new THREE.HemisphereLight( 0xffffff, 0x333, 1);
   scene.add( hlight);
 
+  // areaLight1 = new THREE.AreaLight( 0xffffff, 1 );
+  // areaLight1.position.set( 0, 0, 100 );
+  // areaLight1.rotation.set( Math.PI/2, 0.0001, 0.0001 );
+  // areaLight1.width = 10;
+  // areaLight1.height = 1;
+
+  // scene.add( areaLight1 );  
+
+  // var light = new THREE.AmbientLight( 0x888888 ); // soft white light
+  // scene.add( light );
 
 
-  renderer = new THREE.WebGLRenderer({ antialias: true }); //CanvasRenderer();
+  renderer = new THREE.WebGLRenderer(); //CanvasRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
 
   container.appendChild( renderer.domElement );
@@ -179,49 +198,29 @@ function Snake(scene, dna){
 
 
 Snake.prototype.initGeometry = function(){
-
-  var self_ = this;
   var materials = { "a":new THREE.MeshLambertMaterial( { color: 0x2CA7DD, overdraw: true } ),
                     "t":new THREE.MeshLambertMaterial( { color: 0xFAA327, overdraw: true } ),
                     "c":new THREE.MeshLambertMaterial( { color: 0xE6278A, overdraw: true } ),
                     "g":new THREE.MeshLambertMaterial( { color: 0x5EBC9A, overdraw: true } )}
-  var geometry = new THREE.SphereGeometry( 20, 10, 8 );
-
-
-
-  function dnaObject(base, x, y, normalAngle, helicalAngle, helicalRadius){
-    var me = this;
-    helicalRadius = helicalRadius || 30;
-    this.base = base;
-    this.rc = self_.complements[base];
-    console.log(this.base, this.rc);
-
+  
+  function dnaObject(x,y,normalAngle, helicalAngle){
     this.dnaObj = new THREE.Object3D();
-    this.innerObj = new THREE.Object3D();
-    this.baseMesh = new THREE.Mesh( geometry, materials[this.base] );
-    this.rcMesh   = new THREE.Mesh( geometry, materials[this.rc] );
-    this.baseMesh.position.y = helicalRadius;
-    this.rcMesh.position.y = - helicalRadius;
-    var cylinderGeo = new THREE.CylinderGeometry(7, 7, helicalRadius,10,4, false) ;
-    this.connBase = new THREE.Mesh( cylinderGeo, materials[this.base]) ;
-    this.connRC = new THREE.Mesh( cylinderGeo, materials[this.rc]) ;
-    this.connBase.position.y = helicalRadius/2;
-    this.connRC.position.y = - helicalRadius/2;
 
-    this.innerObj.add(this.baseMesh);
-    this.innerObj.add(this.rcMesh);
-    this.innerObj.add(this.connBase);
-    this.innerObj.add(this.connRC);
-    this.dnaObj.add(this.innerObj)
-
-    this.getRealWorldVertices = function(){
-      me.dnaObj.updateMatrixWorld();
-      me.inner.updateMatrixWorld();
-      var bpReal = me.baseMesh.position.clone() ;
-      var rcReal = me.rcMesh.position.clone()
-    }
-
+    this.base 
   }
+
+
+
+  var circleRadius = 15;
+  var circleShape = new THREE.Shape();
+  circleShape.moveTo( 0, circleRadius );
+  var quad_offset = .90;
+  circleShape.quadraticCurveTo( circleRadius*quad_offset, circleRadius*quad_offset, circleRadius, 0 );
+  circleShape.quadraticCurveTo( circleRadius*quad_offset, -circleRadius*quad_offset, 0, -circleRadius );
+  circleShape.quadraticCurveTo( -circleRadius*quad_offset, -circleRadius*quad_offset, -circleRadius, 0 );
+  circleShape.quadraticCurveTo( -circleRadius*quad_offset, circleRadius*quad_offset, 0, circleRadius );
+
+  var geometry = new THREE.SphereGeometry( 20, 10, 8 ); //new THREE.ShapeGeometry( circleShape ); //
 
   var lineMaterial = new THREE.LineBasicMaterial({
         color: 0x000000,
@@ -234,13 +233,29 @@ Snake.prototype.initGeometry = function(){
 
   for ( var i = 0; i < this.dna.length; i ++ ) {
 
-    var dnaBit = new dnaObject(this.dna[i])
-    dnaBit.dnaObj.position.x = this.positionArray[i*this.segmentsPerBasePair].x;
-    dnaBit.dnaObj.position.y = this.positionArray[i*this.segmentsPerBasePair].y;
-    dnaBit.dnaObj.position.z = 100;
-    this.scene.add(dnaBit.dnaObj);
+    var sphere = new THREE.Mesh( geometry, materials[this.dna[i]] );
+    var sphere2 = new THREE.Mesh( geometry, materials[this.complements[this.dna[i]]] );
 
-    this.snakeGeometry.push(dnaBit);
+    sphere.position.x = this.positionArray[i*this.segmentsPerBasePair].x;
+    sphere.position.y = this.positionArray[i*this.segmentsPerBasePair].y;
+    sphere.position.z = Math.random()*50-25;
+
+    sphere2.position.x = this.positionArray[i*this.segmentsPerBasePair].x;
+    sphere2.position.y = this.positionArray[i*this.segmentsPerBasePair].y;
+    sphere2.position.z = Math.random()*50-25;
+
+    //sphere.rotation.set(Math.PI*1.5,0,0);
+
+    
+    this.scene.add( sphere );
+    if (i < 4 ) this.scene.add( sphere2 );
+
+    var conGeo = new THREE.Geometry();
+    conGeo.vertices.push(sphere.position);
+    conGeo.vertices.push(sphere2.position);
+    var connection = new THREE.Line(conGeo, lineMaterial );
+    this.scene.add(connection);
+    this.snakeGeometry.push({"basePair":sphere, "basePair_rc":sphere2, "connection":connection});
   }
 }
 
@@ -273,12 +288,20 @@ Snake.prototype.update = function(dt){
     var prevIndex = (thisIndex + 1)%this.positionArray.length;
 
     var thisAngle = Math.atan2(this.positionArray[thisIndex].y - this.positionArray[prevIndex].y,  this.positionArray[thisIndex].x - this.positionArray[prevIndex].x)
+    var thisNormal = thisAngle - Math.PI/2;
     var thisHelicalAngle = this.headHelicalAngle + i*this.helicalAngleOffset;
+    var helicalR = this.helicalRadius * Math.cos(thisHelicalAngle);
+    var helicalZ = this.helicalRadius * Math.sin(thisHelicalAngle);
 
-    this.snakeGeometry[i].dnaObj.position.x = this.positionArray[thisIndex].x;
-    this.snakeGeometry[i].dnaObj.position.y = this.positionArray[thisIndex].y;
-    this.snakeGeometry[i].dnaObj.rotation.z = thisAngle;
-    this.snakeGeometry[i].innerObj.rotation.x = thisHelicalAngle;
+    this.snakeGeometry[i].basePair.position.x = this.positionArray[thisIndex].x + helicalR * Math.cos(thisNormal);
+    this.snakeGeometry[i].basePair.position.y = this.positionArray[thisIndex].y + helicalR * Math.sin(thisNormal);
+    this.snakeGeometry[i].basePair.position.z = helicalZ;
+    this.snakeGeometry[i].basePair_rc.position.x = this.positionArray[thisIndex].x - helicalR * Math.cos(thisNormal);
+    this.snakeGeometry[i].basePair_rc.position.y = this.positionArray[thisIndex].y - helicalR * Math.sin(thisNormal);
+    this.snakeGeometry[i].basePair_rc.position.z = -helicalZ;
+    this.snakeGeometry[i].connection.geometry.vertices[0] = this.snakeGeometry[i].basePair.position; 
+    this.snakeGeometry[i].connection.geometry.vertices[1] = this.snakeGeometry[i].basePair_rc.position;
+    this.snakeGeometry[i].connection.geometry.verticesNeedUpdate = true;
   }  
   this.headIndex = newHead;
 }
@@ -408,6 +431,8 @@ function render() {
   //camera.rotation.x = Math.cos( timer ) * 200;
   camera.position.x = andy.positionArray[andy.headIndex].x;
   camera.position.y = andy.positionArray[andy.headIndex].y;
+  directionalLight.position.x = andy.positionArray[andy.headIndex].x;
+  directionalLight.position.y = andy.positionArray[andy.headIndex].y;
   //camera.lookAt( andy.snakeGeometry[0].position );
 
 
