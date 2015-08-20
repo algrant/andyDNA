@@ -14,7 +14,7 @@ function init() {
   info.style.top = '10px';
   info.style.width = '100%';
   info.style.textAlign = 'center';
-  info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> - anDyNA <br> Use arrow keys to turn left and right';
+  info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> - anDyNA <br> Use arrow keys to turn left and right <br> This is so far just a pleasing demo of controllable DNA movement!';
   container.appendChild( info );
 
 
